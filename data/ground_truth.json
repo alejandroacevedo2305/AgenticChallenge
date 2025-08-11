@@ -1,0 +1,18 @@
+{
+  "malicious_ips": [
+    "203.0.113.55",
+    "192.0.2.147"
+  ],
+  "suspicious_events": [
+    {
+      "timestamp": "Aug 11 17:15:12",
+      "ip_address": "203.0.113.55",
+      "description": "Multiple failed login attempts for 'admin', 'root', and 'user'."
+    },
+    {
+      "timestamp": "Aug 11 17:30:47",
+      "ip_address": "192.0.2.147",
+      "description": "Failed login for invalid user 'guest'."
+    }
+  ]
+}

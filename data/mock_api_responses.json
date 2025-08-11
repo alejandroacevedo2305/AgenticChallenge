@@ -1,0 +1,72 @@
+{
+  "203.0.113.55": {
+    "ip_address": "203.0.113.55",
+    "is_public": true,
+    "abuse_confidence_score": 100,
+    "country_code": "CN",
+    "country_name": "China",
+    "isp": "China Telecom",
+    "domain": "chinatelecom.com.cn",
+    "hostnames": [],
+    "total_reports": 582,
+    "num_distinct_users": 150,
+    "last_reported_at": "2023-08-11T12:00:00+00:00",
+    "reports": [
+      {
+        "reported_at": "2023-08-11T12:00:00+00:00",
+        "comment": "SSH brute-force attempts.",
+        "categories": [18, 22],
+        "reporter_id": 1234,
+        "reporter_country_code": "US",
+        "reporter_country_name": "United States"
+      }
+    ]
+  },
+  "192.0.2.147": {
+    "ip_address": "192.0.2.147",
+    "is_public": true,
+    "abuse_confidence_score": 95,
+    "country_code": "RU",
+    "country_name": "Russia",
+    "isp": "Digital Ocean, Inc.",
+    "domain": "digitalocean.com",
+    "hostnames": ["mail.bad-domain.ru"],
+    "total_reports": 42,
+    "num_distinct_users": 10,
+    "last_reported_at": "2023-08-10T23:10:00+00:00",
+    "reports": [
+      {
+        "reported_at": "2023-08-10T23:10:00+00:00",
+        "comment": "Failed login attempts on mail server.",
+        "categories": [18, 5],
+        "reporter_id": 5678,
+        "reporter_country_code": "DE",
+        "reporter_country_name": "Germany"
+      }
+    ]
+  },
+  "domains": {
+    "bad-domain.ru": {
+      "domain": "bad-domain.ru",
+      "registrar": "RU-CENTER-RU",
+      "creation_date": "2023-01-15",
+      "reputation_score": 10,
+      "categories": ["malware", "phishing"],
+      "virustotal_detections": 15,
+      "total_engines": 89,
+      "last_analysis_date": "2023-08-11T10:30:00+00:00",
+      "threat_types": ["trojan", "botnet_c2"]
+    },
+    "chinatelecom.com.cn": {
+      "domain": "chinatelecom.com.cn",
+      "registrar": "China Internet Network Information Center",
+      "creation_date": "1997-05-20",
+      "reputation_score": 85,
+      "categories": ["legitimate_business"],
+      "virustotal_detections": 0,
+      "total_engines": 89,
+      "last_analysis_date": "2023-08-11T10:30:00+00:00",
+      "threat_types": []
+    }
+  }
+}
