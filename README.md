@@ -73,13 +73,113 @@ You are now ready to start building!
 
 Your primary task is to build the agent's logic using LangGraph. The template is provided in `/src/agent/` following Python conventions, but you can reorganize as needed. The agent should be structured as a graph of interconnected nodes, where each node performs a specific function and passes its results to the next via a shared state object.
 
+### The Big Picture
+
+Your agent will process a single authentication log file and produce an incident report. Here's the data flow:
+
+```
+auth.log → [Parse] → [Detect Anomalies] → [Enrich with Threat Intel] → [Generate Report] → incident_report.md
+```
+
+Each node updates a shared `SOCState` object that carries information forward to the next node.
+
+### Node Implementation Details
+
 You will need to implement the following nodes and wire them together:
 
-- **Node 1: The Log Parser:** Reads `data/auth.log` and parses it into a structured format.
-- **Node 2: The Anomaly Detector:** Uses an LLM to identify suspicious events from the structured log data.
-- **Node 3: The Enrichment Engine (A Tool-Using Node):** For each suspicious indicator identified, it must use tools to gather external context. You will not use a live API. Instead, you will implement tools that read from the provided `data/mock_api_responses.json` file.
-  - **IP Reputation Tool:** Implement a tool that takes an IP address as input, looks it up in the `mock_api_responses.json` file, and returns the corresponding mock data (e.g., abuse confidence score, country).
-- **Node 4: The Report Generator:** Synthesizes all findings into a final, well-structured incident brief in Markdown format.
+#### **Node 1: The Log Parser**
+
+**Input:** `state.log_file_path` (pointing to `data/auth.log`)  
+**Output:** `state.parsed_logs` (list of structured log entries)
+
+- Read the raw log file line by line
+- Parse each line into structured data (timestamp, service, event type, IP, user, etc.)
+- Handle different log formats (failed logins, successful logins, sudo commands, etc.)
+- Store results in `state.parsed_logs` as a list of dictionaries
+
+**Example parsed entry:**
+
+```python
+{
+    "timestamp": "Aug 11 17:15:12",
+    "hostname": "ubuntu-server",
+    "service": "sshd",
+    "event_type": "failed_login",
+    "user": "admin",
+    "source_ip": "203.0.113.55",
+    "port": 48122
+}
+```
+
+#### **Node 2: The Anomaly Detector**
+
+**Input:** `state.parsed_logs` (structured log data)  
+**Output:** `state.suspicious_events` (list of identified threats)
+
+- Use the Ollama LLM to analyze parsed logs for suspicious patterns
+- Look for: brute force attacks, invalid users, unusual login patterns
+- Craft effective prompts that help the LLM identify security threats
+- Parse LLM responses into structured suspicious events
+
+**Example suspicious event:**
+
+```python
+{
+    "source_ip": "203.0.113.55",
+    "event_type": "brute_force",
+    "description": "Multiple failed login attempts followed by success",
+    "severity": "HIGH",
+    "affected_accounts": ["admin", "root", "user"]
+}
+```
+
+#### **Node 3: The Enrichment Engine (Tool-Using Node)**
+
+**Input:** `state.suspicious_events` (list of threats to investigate)  
+**Output:** `state.enriched_data` (threat intelligence for each IP)
+
+- For each suspicious IP address found, use tools to gather context
+- **Implement the IP Reputation Tool:** A function that reads `data/mock_api_responses.json` and returns threat intelligence
+- Handle cases where IPs aren't found in the mock data
+- Store enrichment results in `state.enriched_data`
+
+**Your IP Reputation Tool should:**
+
+```python
+def ip_reputation_tool(ip_address: str) -> dict:
+    # Read data/mock_api_responses.json
+    # Look up the IP address
+    # Return threat intelligence data or None
+    return {
+        "abuse_confidence_score": 100,
+        "country": "China",
+        "threat_type": "brute_force"
+    }
+```
+
+#### **Node 4: The Report Generator**
+
+**Input:** `state.suspicious_events` + `state.enriched_data`  
+**Output:** `state.incident_report` (final Markdown report)
+
+- Use the Ollama LLM to synthesize all findings into a professional report
+- Include: Executive Summary, Technical Details, IoCs, Risk Assessment, Recommended Actions
+- Format as clean, actionable Markdown that a human analyst can use
+- Make recommendations specific and concrete (e.g., "Block IP 203.0.113.55")
+
+### Key Implementation Notes
+
+1. **State Object:** The `SOCState` class is already defined with all necessary fields. Each node should update the relevant fields and return a dictionary with the updates.
+
+2. **LLM Integration:** Use the provided `get_ollama_llm(config)` function to get a configured ChatOllama instance. Design your prompts carefully!
+
+3. **Error Handling:** Use the `state.processing_errors` field to track any issues. Decide whether to fail fast or continue processing.
+
+4. **File I/O:** Read from the provided data files (`data/auth.log`, `data/mock_api_responses.json`). Make sure your paths work correctly.
+
+5. **Testing:** You can test your agent by running `langgraph dev` and interacting with it, or by running the evaluation tests.
+
+The template provides placeholder implementations and detailed TODOs to guide you. Focus on getting the core functionality working before adding extra features!
 
 ---
 
