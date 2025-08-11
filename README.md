@@ -57,18 +57,6 @@ This project uses a local LLM to ensure privacy and avoid API key costs.
 
 **Optional Setup:** Configure environment variables by copying `.env.example` to `.env` and adjusting settings as needed.
 
-**Quick Test:** Run the provided test script to verify everything is working:
-
-```bash
-python test_ollama_setup.py
-```
-
-**Test the Template:** Run the example to see the agent structure:
-
-```bash
-python example_usage.py
-```
-
 You are now ready to start building!
 
 ---
