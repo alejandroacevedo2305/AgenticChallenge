@@ -14,8 +14,7 @@ Requirements:
 import json
 import pytest
 from pathlib import Path
-from agentevals import run_evals
-from agentevals.evaluator import Evaluator
+from agentevals.trajectory.llm import create_trajectory_llm_as_judge
 
 # Test data paths
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -24,7 +23,7 @@ GROUND_TRUTH_PATH = DATA_DIR / "ground_truth.json"
 MOCK_API_PATH = DATA_DIR / "mock_api_responses.json"
 
 
-class SOCAgentEvaluator(Evaluator):
+class SOCAgentEvaluator:
     """
     Custom evaluator for the SOC Agent using agent-evals framework.
     
@@ -34,7 +33,14 @@ class SOCAgentEvaluator(Evaluator):
     def __init__(self):
         """Initialize the SOC Agent evaluator."""
         # TODO: Load ground truth data and set up evaluation parameters
-        pass
+        self.ground_truth = self.load_ground_truth()
+        
+        # TODO: Set up LLM-as-a-judge evaluator for report quality
+        # Example setup (candidates should implement):
+        # self.report_quality_evaluator = create_trajectory_llm_as_judge(
+        #     model="ollama:llama3.1:8b",  # Use local Ollama instead of OpenAI
+        #     prompt="Your custom prompt for evaluating report quality..."
+        # )
     
     def load_ground_truth(self) -> dict:
         """
@@ -85,13 +91,34 @@ class SOCAgentEvaluator(Evaluator):
         Returns:
             dict: Evaluation results including scores for different criteria
         """
-        # TODO: Implement LLM-as-a-judge evaluation
-        # Use agent-evals framework to score report on:
-        # - Clarity and structure
-        # - Actionability of recommendations
-        # - Completeness of analysis
-        # - Professional tone and formatting
-        pass
+        # TODO: Implement LLM-as-a-judge evaluation using agentevals
+        # Example implementation:
+        
+        # 1. Create trajectory-style input for the report
+        # trajectory = [
+        #     {"role": "user", "content": "Generate a SOC incident report"},
+        #     {"role": "assistant", "content": report_content}
+        # ]
+        
+        # 2. Use create_trajectory_llm_as_judge with custom prompt
+        # from tests.evaluation_config import REPORT_QUALITY_PROMPT
+        # evaluator = create_trajectory_llm_as_judge(
+        #     model="ollama:llama3.1:8b",
+        #     prompt=REPORT_QUALITY_PROMPT
+        # )
+        
+        # 3. Run evaluation
+        # result = evaluator(outputs=trajectory)
+        # return result
+        
+        # Placeholder return
+        return {
+            "clarity_score": 0,
+            "technical_accuracy_score": 0,
+            "actionability_score": 0,
+            "completeness_score": 0,
+            "overall_score": 0
+        }
 
 
 @pytest.fixture

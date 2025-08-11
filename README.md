@@ -4,7 +4,7 @@ Welcome! We're excited to see what you can build. This challenge is designed to 
 
 Think of this as an open source project. We're more interested in your thought process, design choices, and the quality of your work than in a specific "correct" answer. Be biased toward production-ready code over a large quantity of features.
 
-**Time Expectation:** Please aim to spend approximately 3-4 hours of focused work on this challenge.
+**Time Expectation:** Please aim to spend approximately 3-4 hours of focused work on this challenge. If you run out of time, document your remaining plans in `DESIGN_CHOICES.md` rather than rushing through implementation.
 
 ---
 
@@ -57,6 +57,14 @@ This project uses a local LLM to ensure privacy and avoid API key costs.
 
 **Optional Setup:** Configure environment variables by copying `.env.example` to `.env` and adjusting settings as needed.
 
+**Start the Agent:** Once you've implemented your SOC agent, you can start it with:
+
+```bash
+langgraph dev
+```
+
+This will start the LangGraph server and make your agent accessible for testing and debugging.
+
 You are now ready to start building!
 
 ---
@@ -76,6 +84,8 @@ You will need to implement the following nodes and wire them together:
 ---
 
 ## 4. Advanced Challenges (Optional, but Encouraged)
+
+**⏰ Time Note:** These are truly optional! Focus on the core 4 nodes first. If you have extra time or want to showcase additional skills, these are great extensions. If not, just document your approach in `DESIGN_CHOICES.md`.
 
 - **Challenge A: Automated Mitigation & Response:** Implement a "Response Planner" node that suggests concrete response steps (e.g., firewall rule syntax like `iptables -A INPUT -s 203.0.113.55 -j DROP`).
 
@@ -102,6 +112,10 @@ You must define and calculate at least two metrics:
 **Run Evaluations:**
 
 ```bash
+# Make sure your virtual environment is activated first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the evaluation tests
 pytest tests/test_soc_agent_evaluation.py -v
 ```
 
@@ -112,5 +126,7 @@ pytest tests/test_soc_agent_evaluation.py -v
 1.  Push all your code to your forked repository on GitHub and ensure it is public.
 2.  Send the link to your repository back to us.
 3.  **The Most Important Part:** Fill out the `DESIGN_CHOICES.md` file in detail. We want to understand your thought process, the trade-offs you made, and what you would do next.
+
+**⏰ Time Management:** We respect your time! If you're approaching the 3-4 hour mark and haven't finished implementing everything, that's completely fine. Simply document what you would do next in the `DESIGN_CHOICES.md` file. We're more interested in your architectural thinking and problem-solving approach than a fully polished implementation.
 
 Good luck!

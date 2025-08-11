@@ -65,6 +65,8 @@ This is where you can really shine. Discuss the most significant decisions you m
 
 No project is ever truly "finished." If you had another week to work on this, what would you do next? What would you prioritize, and why?
 
+**⏰ If You Ran Out of Time:** If you didn't complete all the implementation within 3-4 hours, please document what you would have done here. We completely understand and want to respect your time! Describe your planned approach for any unfinished components.
+
 Consider these areas:
 
 ### Accuracy & Intelligence

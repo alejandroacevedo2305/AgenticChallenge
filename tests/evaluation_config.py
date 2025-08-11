@@ -19,7 +19,7 @@ class EvaluationConfig:
     MIN_RESPONSE_TIME: float = 30.0   # Maximum acceptable response time in seconds
     
     # LLM-as-a-Judge settings
-    JUDGE_MODEL: str = "llama3.1:8b"  # Local Ollama model for evaluation
+    JUDGE_MODEL: str = "ollama:llama3.1:8b"  # Local Ollama model for evaluation (note: ollama: prefix)
     JUDGE_BASE_URL: str = "http://localhost:11434"  # Ollama service URL
     JUDGE_TEMPERATURE: float = 0.1    # Low temperature for consistent scoring
     
