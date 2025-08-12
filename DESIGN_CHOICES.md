@@ -1,3 +1,7 @@
+source venv/bin/activate && PYTHONPATH=. langgraph dev
+
+pkill -f "langgraph dev" 2>/dev/null; sleep 2; source venv/bin/activate && langgraph dev
+
 # Design Choices & Rationale
 
 This document is the most important part of your submission. It's your opportunity to explain your thought process, the trade-offs you considered, and the reasoning behind your implementation. Clear, concise communication is a critical skill for any engineer, and we're excited to learn how you approached the problem.
