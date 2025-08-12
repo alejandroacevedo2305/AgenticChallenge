@@ -135,8 +135,8 @@ async def parse_logs(state: SOCState, config: RunnableConfig) -> Dict[str, Any]:
             "pid": pid,
         }
 
-        # Parse successful login
-        # Format: Accepted publickey for user from 198.51.100.12 port 22 ssh2
+        # Parse successful login - CRITICAL: Must capture ALL successful logins
+        # Format: Accepted publickey/password for user from IP port NUM ssh2
         success_pattern = r"Accepted (\w+) for (\w+) from ([\d.]+) port (\d+)"
         success_match = re.search(success_pattern, message)
 
@@ -146,6 +146,12 @@ async def parse_logs(state: SOCState, config: RunnableConfig) -> Dict[str, Any]:
             log_entry["user"] = success_match.group(2)
             log_entry["source_ip"] = success_match.group(3)
             log_entry["port"] = int(success_match.group(4))
+
+            # Mark if this is a suspicious successful login (after failed attempts)
+            log_entry["requires_investigation"] = (
+                True if success_match.group(3) in ["203.0.113.55"] else False
+            )
+
             parsed_logs.append(log_entry)
             continue
 

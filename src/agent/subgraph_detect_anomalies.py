@@ -110,22 +110,27 @@ async def detect_anomalies(state: SOCState, config: RunnableConfig) -> Dict[str,
 Parsed Logs:
 {json.dumps(state.parsed_logs, indent=2)}
 
-Look for these suspicious patterns:
-- Multiple failed login attempts from the same IP
-- Brute force attack patterns (rapid sequential attempts)
-- Invalid/non-existent user login attempts  
-- Successful logins after multiple failures (potential compromise)
-- Login attempts from known malicious IP ranges
-- Unusual timestamps or patterns
+Look for these CRITICAL suspicious patterns:
+1. **SUCCESSFUL LOGIN AFTER FAILED ATTEMPTS** - This indicates SYSTEM COMPROMISE
+2. Multiple failed login attempts from the same IP (brute force)
+3. Invalid/non-existent user login attempts
+4. Login attempts from known malicious IP ranges
+5. Unusual timestamps or patterns
+
+CRITICAL: If you see a successful login from an IP that had previous failed attempts, mark it as:
+- event_type: "successful_breach" 
+- severity: "CRITICAL"
+- Include "SYSTEM COMPROMISED" in the description
 
 For each suspicious event found, create a JSON object with these fields:
 - source_ip: the suspicious IP address
-- event_type: type of suspicious activity (choose from: brute_force, invalid_user, privilege_escalation, unusual_time, suspicious_pattern)
+- event_type: type of suspicious activity (choose from: successful_breach, brute_force, invalid_user, privilege_escalation, unusual_time, suspicious_pattern)
 - description: detailed explanation of why this is suspicious
-- severity: HIGH, MEDIUM, or LOW
+- severity: CRITICAL, HIGH, MEDIUM, or LOW
 - affected_accounts: list of usernames targeted
 - event_count: number of related events (optional)
 - time_range: time range of the activity (optional)
+- compromised: true/false - Set to true if successful login after failures
 
 IMPORTANT: Return ONLY a valid JSON array of suspicious events, nothing else. 
 If no suspicious activity is found, return an empty array [].
@@ -196,6 +201,76 @@ Example format:
         print(f"Error calling LLM: {e}")
         # Return empty list on error
         suspicious_events = []
+
+    # CRITICAL: Additional manual check for successful breaches
+    # This ensures we NEVER miss a successful login after failed attempts
+    ip_failed_attempts = {}
+    ip_successful_logins = {}
+
+    # First pass: count failed attempts per IP
+    for log in state.parsed_logs:
+        ip = log.get("source_ip")
+        if log.get("event_type") == "failed_login":
+            if ip not in ip_failed_attempts:
+                ip_failed_attempts[ip] = []
+            ip_failed_attempts[ip].append(log)
+        elif log.get("event_type") == "successful_login":
+            if ip not in ip_successful_logins:
+                ip_successful_logins[ip] = []
+            ip_successful_logins[ip].append(log)
+
+    # Check for successful breaches (successful login from IP with failed attempts)
+    for ip in ip_successful_logins:
+        if ip in ip_failed_attempts:
+            # CRITICAL: This IP had failures then success = BREACH!
+            successful = ip_successful_logins[ip][0]
+            compromised_user = successful.get("user")  # The actual compromised account
+
+            # Check if LLM already detected this breach
+            breach_detected = False
+            for i, event in enumerate(suspicious_events):
+                if (
+                    event.get("source_ip") == ip
+                    and "breach" in event.get("event_type", "").lower()
+                ):
+                    breach_detected = True
+                    # Update the existing event with the correct compromised account
+                    if not event.get("compromised_account"):
+                        event["compromised_account"] = compromised_user
+                        event["description"] = (
+                            f"CRITICAL: SYSTEM COMPROMISED! User '{compromised_user}' successfully logged in from {ip} after failed attempts. The attacker has ACTIVE ACCESS to the system."
+                        )
+                    break
+
+            if not breach_detected:
+                # Add critical breach event if not already detected
+                failed_count = len(ip_failed_attempts[ip])
+                successful = ip_successful_logins[ip][0]
+                failed_users = list(
+                    set([log.get("user") for log in ip_failed_attempts[ip]])
+                )
+                compromised_user = successful.get(
+                    "user"
+                )  # The actual compromised account
+
+                # Build list of ALL targeted accounts (failed attempts + successful)
+                all_targeted = failed_users.copy()
+                if compromised_user not in all_targeted:
+                    all_targeted.append(compromised_user)
+
+                suspicious_events.append(
+                    {
+                        "source_ip": ip,
+                        "event_type": "successful_breach",
+                        "description": f"CRITICAL: SYSTEM COMPROMISED! Successful login for user '{compromised_user}' from {ip} after {failed_count} failed attempts. Attacker tried accounts: {', '.join(failed_users)} and SUCCEEDED with account: {compromised_user}",
+                        "severity": "CRITICAL",
+                        "affected_accounts": all_targeted,  # All accounts that were targeted
+                        "event_count": failed_count + 1,
+                        "compromised": True,
+                        "compromised_account": compromised_user,  # The specific account that was compromised
+                        "time_range": f"{ip_failed_attempts[ip][0].get('timestamp')} - {successful.get('timestamp')}",
+                    }
+                )
 
     return {"suspicious_events": suspicious_events}
 

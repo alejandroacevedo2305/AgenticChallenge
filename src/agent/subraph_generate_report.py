@@ -140,18 +140,32 @@ def calculate_overall_risk(suspicious_events: List[Dict], enriched_data: Dict) -
         enriched_data: Dictionary containing enriched threat intelligence
 
     Returns:
-        Risk level string (CRITICAL, HIGH, MEDIUM, LOW)
+        Risk level string (CRITICAL - SYSTEM COMPROMISED, CRITICAL, HIGH, MEDIUM, LOW)
     """
+    # CRITICAL CHECK: Is the system compromised?
+    for event in suspicious_events:
+        if event.get("event_type") == "successful_breach" or event.get("compromised"):
+            return "CRITICAL - SYSTEM COMPROMISED"
+
+    # Check enriched data for system compromise
+    for ip, data in enriched_data.items():
+        if data.get("system_compromised") or "COMPROMISED" in data.get(
+            "overall_risk", ""
+        ):
+            return "CRITICAL - SYSTEM COMPROMISED"
+
     # Count high severity events
     high_severity_count = sum(
-        1 for event in suspicious_events if event.get("severity") == "HIGH"
+        1
+        for event in suspicious_events
+        if event.get("severity") in ["HIGH", "CRITICAL"]
     )
 
     # Check for critical risk IPs
     critical_ips = [
         ip
         for ip, data in enriched_data.items()
-        if data.get("overall_risk") == "CRITICAL"
+        if "CRITICAL" in data.get("overall_risk", "")
     ]
 
     if critical_ips or high_severity_count >= 2:
@@ -192,8 +206,26 @@ async def generate_report(state: SOCState, config: RunnableConfig) -> Dict[str, 
         accounts = event.get("affected_accounts", [])
         affected_accounts.update(accounts)
 
+    # Check if system is compromised
+    system_compromised = "COMPROMISED" in overall_risk
+    compromised_accounts = []
+    successful_breach_details = None
+
+    for event in state.suspicious_events:
+        if event.get("compromised") or event.get("event_type") == "successful_breach":
+            successful_breach_details = event
+            if event.get("compromised_account"):
+                compromised_accounts.append(event.get("compromised_account"))
+            # Also extract from affected_accounts if it's the compromised event
+            elif event.get("compromised") and event.get("affected_accounts"):
+                # The last account in affected_accounts might be the successful one
+                compromised_accounts.extend(event.get("affected_accounts", []))
+
     # Build the prompt with structured data
     prompt = f"""You are a senior SOC analyst. Generate a professional, structured incident report based on this security analysis.
+
+{"⚠️ CRITICAL ALERT: SYSTEM HAS BEEN COMPROMISED! ⚠️" if system_compromised else ""}
+{f"Compromised Accounts: {', '.join(compromised_accounts)}" if compromised_accounts else ""}
 
 DETECTED SUSPICIOUS EVENTS:
 {json.dumps(state.suspicious_events, indent=2)}
@@ -205,7 +237,11 @@ SUMMARY STATISTICS:
 - Total Suspicious Events: {total_events}
 - Unique Source IPs: {unique_ips}
 - Overall Risk Level: {overall_risk}
+- System Status: {"COMPROMISED - IMMEDIATE ACTION REQUIRED" if system_compromised else "Under Attack"}
 - Affected Accounts: {', '.join(sorted(affected_accounts)) if affected_accounts else 'None'}
+{"- COMPROMISED ACCOUNTS: " + ', '.join(compromised_accounts) if compromised_accounts else ""}
+
+{"CRITICAL: The attacker successfully logged in after brute force attempts. The system is COMPROMISED and the attacker has ACTIVE ACCESS." if system_compromised else ""}
 
 Generate a comprehensive incident report with these sections:
 
@@ -237,8 +273,16 @@ Generate a comprehensive incident report with these sections:
    - Short-term actions (within 24 hours)
    - Long-term improvements (within 1 week)
 
+{"CRITICAL INSTRUCTIONS: The report MUST clearly state that:" if system_compromised else ""}
+{"1. The attacker SUCCESSFULLY logged in and has ACTIVE ACCESS to the system" if system_compromised else ""}
+{"2. The system is CURRENTLY COMPROMISED, not just under attack" if system_compromised else ""}
+{"3. The account '" + compromised_accounts[0] + "' was successfully breached after brute force attempts" if system_compromised and compromised_accounts else ""}
+{"4. This is NOT just failed attempts - the attacker SUCCEEDED and is IN THE SYSTEM" if system_compromised else ""}
+{"5. Include FORENSIC and ISOLATION steps as TOP PRIORITY" if system_compromised else ""}
+
 Format as professional Markdown. Be specific, actionable, and prioritize recommendations by urgency.
 Include specific IP addresses, account names, and timestamps where relevant.
+NEVER downplay a successful breach as just 'failed attempts' - be clear about successful compromises.
 """
 
     try:
@@ -314,8 +358,20 @@ def generate_fallback_report(
             f"- {event.get('event_type', 'Unknown')}: {event.get('description', 'No description')}"
         )
 
+    # Check if system is compromised
+    system_compromised = "COMPROMISED" in overall_risk
+
     # Build recommendations based on risk
-    if overall_risk == "CRITICAL":
+    if system_compromised:
+        immediate_actions = [
+            "1. **CRITICAL - ISOLATE SYSTEM NOW**: Disconnect affected system from network immediately",
+            "2. **CRITICAL - DISABLE ACCOUNTS**: Disable ALL compromised accounts immediately",
+            "3. **CRITICAL - FORENSICS**: Capture memory dump and disk image for forensic analysis",
+            "4. **CRITICAL - AUDIT**: Review all activity from compromised accounts since breach",
+            "5. **CRITICAL - SCAN**: Check for backdoors, rootkits, and persistence mechanisms",
+            "6. **CRITICAL - RESET**: Force password reset for ALL accounts on affected system",
+        ]
+    elif overall_risk == "CRITICAL":
         immediate_actions = [
             "1. **IMMEDIATE**: Block all identified malicious IPs at the firewall",
             "2. **IMMEDIATE**: Disable affected accounts pending investigation",
@@ -334,17 +390,23 @@ def generate_fallback_report(
             "3. Consider implementing additional monitoring",
         ]
 
-    return f"""# Security Incident Report
+    # Check for compromised accounts
+    compromised_accounts_list = []
+    for event in state.suspicious_events:
+        if event.get("compromised_account"):
+            compromised_accounts_list.append(event.get("compromised_account"))
+
+    return f"""# {"⚠️ CRITICAL SECURITY BREACH ⚠️" if system_compromised else "Security Incident Report"}
 **Generated**: {timestamp}
 **Risk Level**: {overall_risk}
-**Status**: Active Investigation
+**Status**: {"SYSTEM COMPROMISED - ACTIVE BREACH" if system_compromised else "Active Investigation"}
+{f"**⚠️ COMPROMISED ACCOUNTS: {', '.join(compromised_accounts_list)} ⚠️**" if compromised_accounts_list else ""}
 
 ---
 
-## Executive Summary
+## {"⚠️ CRITICAL: SYSTEM BREACH DETECTED ⚠️" if system_compromised else "Executive Summary"}
 
-Security monitoring has detected {total_events} suspicious event(s) from {unique_ips} unique IP address(es). 
-The incident has been classified as {overall_risk} risk and requires immediate attention from the security team.
+{"⚠️ **CRITICAL BREACH**: The attacker has SUCCESSFULLY COMPROMISED the system after brute-force attempts. They have ACTIVE ACCESS through the account(s): " + ', '.join(compromised_accounts_list) + ". IMMEDIATE ISOLATION AND FORENSIC RESPONSE REQUIRED!" if system_compromised else f"Security monitoring has detected {total_events} suspicious event(s) from {unique_ips} unique IP address(es). The incident has been classified as {overall_risk} risk and requires immediate attention from the security team."}
 
 ## Technical Details
 

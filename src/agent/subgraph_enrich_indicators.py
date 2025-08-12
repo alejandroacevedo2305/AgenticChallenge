@@ -233,8 +233,36 @@ async def enrich_indicators(state: SOCState, config: RunnableConfig) -> Dict[str
                                 enriched_data[ip]["first_seen"] = time_range
                             enriched_data[ip]["last_seen"] = time_range
 
+                # Check if this IP has any successful breaches
+                has_breach = False
+                compromised_accounts = []
+                for evt in state.suspicious_events:
+                    if evt.get("source_ip") == ip and (
+                        evt.get("event_type") == "successful_breach"
+                        or evt.get("compromised")
+                    ):
+                        has_breach = True
+                        # Get the specific compromised account
+                        if evt.get("compromised_account"):
+                            compromised_accounts.append(evt.get("compromised_account"))
+
                 # Add summary recommendation based on combined threat data
-                if (
+                if has_breach:
+                    # CRITICAL: System has been compromised!
+                    enriched_data[ip]["overall_risk"] = "CRITICAL - SYSTEM COMPROMISED"
+                    enriched_data[ip]["system_compromised"] = True
+                    enriched_data[ip]["compromised_accounts"] = list(
+                        set(compromised_accounts)
+                    )
+                    enriched_data[ip]["action_required"] = (
+                        "IMMEDIATE ACTION REQUIRED: "
+                        "1) ISOLATE affected system immediately, "
+                        "2) RESET all compromised account passwords, "
+                        "3) AUDIT all activity from compromised accounts, "
+                        "4) CHECK for backdoors/persistence mechanisms, "
+                        "5) INITIATE full incident response protocol"
+                    )
+                elif (
                     threat_intel.get("threat_level") == "HIGH"
                     or enriched_data[ip]["total_suspicious_events"] > 5
                 ):
