@@ -1,4 +1,5 @@
-source venv/bin/activate && PYTHONPATH=. langgraph dev
+source venv/bin/activate && langgraph dev
+
 
 pkill -f "langgraph dev" 2>/dev/null; sleep 2; source venv/bin/activate && langgraph dev
 
