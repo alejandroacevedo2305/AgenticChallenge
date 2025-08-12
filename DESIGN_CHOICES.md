@@ -244,26 +244,6 @@ Given the modular subgraph architecture, future enhancements can be implemented 
    builder.add_node("detect_anomalies_llm", llm_based_detector)
    builder.add_node("consensus_engine", combine_detections)
    ```
-
-### Tool Expansion
-
-**Priority Tool Roadmap:**
-
-1. **Week 1 - Critical Tools:**
-   - **WHOIS Lookup**: Domain registration info for IPs
-   - **VirusTotal Integration**: Multi-engine malware scanning
-   - **Shodan Query**: Exposed services on suspicious IPs
-
-2. **Week 2 - Enhanced Intelligence:**
-   - **MITRE ATT&CK Mapping**: Classify attacks by technique
-   - **Threat Feed Integration**: Real-time IoC feeds
-   - **User Behavior Analytics**: Baseline normal activity
-
-3. **Week 3 - Automation Tools:**
-   - **Firewall Rule Generator**: Auto-create blocking rules
-   - **SOAR Integration**: Trigger automated responses
-   - **Ticketing System**: Create incidents in ServiceNow/Jira
-
 Implementation leveraging subgraph pattern:
 ```python
 # New subgraph for extended enrichment
