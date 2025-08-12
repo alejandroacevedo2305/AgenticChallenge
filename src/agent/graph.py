@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List
+from typing_extensions import TypedDict
 
 from dotenv import load_dotenv
 from langchain_core.runnables import RunnableConfig
@@ -44,7 +45,7 @@ class SOCState:
     """
 
     # Input data
-    log_file_path: str = ""
+    log_file_path: str = "data/auth.log"  # Default to auth.log
 
     # Processed data
     parsed_logs: List[Dict[str, Any]] = None

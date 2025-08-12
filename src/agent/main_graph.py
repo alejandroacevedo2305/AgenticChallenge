@@ -23,7 +23,8 @@ from __future__ import annotations
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List
+from typing_extensions import TypedDict
 
 from dotenv import load_dotenv
 from langchain_core.runnables import RunnableConfig
@@ -31,10 +32,10 @@ from langchain_ollama import ChatOllama
 from langgraph.graph import END, START, StateGraph
 
 # Import all subgraphs
-from subgraph_parse_logs import subgraph_parse_logs
-from subgraph_detect_anomalies import subgraph_detect_anomalies
-from subgraph_enrich_indicators import subgraph_enrich_indicators
-from subraph_generate_report import subgraph_generate_report
+from src.agent.subgraph_parse_logs import subgraph_parse_logs
+from src.agent.subgraph_detect_anomalies import subgraph_detect_anomalies
+from src.agent.subgraph_enrich_indicators import subgraph_enrich_indicators
+from src.agent.subraph_generate_report import subgraph_generate_report
 
 # Load environment variables
 load_dotenv(override=True)
@@ -59,7 +60,7 @@ class SOCState:
     """
 
     # Input data
-    log_file_path: str = ""
+    log_file_path: str = "data/auth.log"  # Default to auth.log
 
     # Processed data
     parsed_logs: List[Dict[str, Any]] = None
