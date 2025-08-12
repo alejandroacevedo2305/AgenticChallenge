@@ -164,7 +164,7 @@ ip_successful_logins = {}
 - Explicit pattern list to look for
 - Critical emphasis on breach detection using CAPITAL letters
 
-This dual approach ensures 100% detection of successful breaches even if the LLM fails.
+This dual approach enable detection of successful breaches even if the LLM fails.
 
 ### State Management Design
 

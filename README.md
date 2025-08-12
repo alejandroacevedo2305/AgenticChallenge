@@ -19,6 +19,13 @@ Use the helper script to run unit and integration tests:
 
 ![Tests running](images/tests_running.png)
 
+
+### Completed Test Results
+Summary of a successful full test suite run:
+
+![Completed tests](images/completed_tests.png)
+
+
 ### Project Structure
 ```
 AgenticChallenge/
