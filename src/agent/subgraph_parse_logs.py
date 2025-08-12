@@ -1,3 +1,13 @@
+"""Parse logs from a file and return a list of parsed logs.
+
+use as:
+source venv/bin/activate && python src/agent/subgraph_parse_logs.py
+
+or
+
+source venv/bin/activate && python -m src.agent.subgraph_parse_logs
+"""
+
 # %%
 from __future__ import annotations
 
@@ -9,6 +19,7 @@ from dotenv import load_dotenv
 from langchain_core.runnables import RunnableConfig
 from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph
+from langgraph.graph import START, StateGraph
 
 # Load environment variables
 load_dotenv(override=True)
@@ -157,3 +168,23 @@ async def parse_logs(state: SOCState, config: RunnableConfig) -> Dict[str, Any]:
             parsed_logs.append(log_entry)
 
     return {"parsed_logs": parsed_logs}
+
+
+builder = StateGraph(SOCState)
+builder.add_node("parse_logs", parse_logs)
+builder.add_edge(START, "parse_logs")
+subgraph_parse_logs = builder.compile()
+
+if __name__ == "__main__":
+    import asyncio
+
+    async def _main() -> None:
+        async for _chunk in subgraph_parse_logs.astream(
+            {"log_file_path": "data/auth.log"},
+            stream_mode="updates",
+            subgraphs=True,
+            debug=True,
+        ):
+            pass
+
+    asyncio.run(_main())
