@@ -14,7 +14,8 @@ dependencies = [
     "agentevals>=0.0.9",
     "langchain-ollama>=0.1.0",
     "langchain-core>=0.2.0",
-    "pytest>=8.3.5"
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.21.0",
 ]
 
 
@@ -59,11 +60,20 @@ lint.ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
 [dependency-groups]
 dev = [
     "anyio>=4.7.0",
     "langgraph-cli[inmem]>=0.2.8",
     "mypy>=1.13.0",
     "pytest>=8.3.5",
+    "pytest-asyncio>=0.21.0",
     "ruff>=0.8.2",
 ]

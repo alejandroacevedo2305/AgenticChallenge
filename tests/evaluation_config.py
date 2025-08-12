@@ -5,31 +5,35 @@ This file contains configuration settings and evaluation criteria
 for the AI Junior SOC Analyst agent benchmarks.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Any
 
 
 @dataclass
 class EvaluationConfig:
     """Configuration settings for SOC agent evaluation."""
-    
+
     # Minimum thresholds for passing evaluation
     MIN_DETECTION_RATE: float = 80.0  # Minimum % of malicious IPs to detect
-    MIN_REPORT_QUALITY: float = 7.0   # Minimum report quality score (1-10)
-    MIN_RESPONSE_TIME: float = 30.0   # Maximum acceptable response time in seconds
-    
+    MIN_REPORT_QUALITY: float = 7.0  # Minimum report quality score (1-10)
+    MIN_RESPONSE_TIME: float = 30.0  # Maximum acceptable response time in seconds
+
     # LLM-as-a-Judge settings
-    JUDGE_MODEL: str = "ollama:llama3.1:8b"  # Local Ollama model for evaluation (note: ollama: prefix)
+    JUDGE_MODEL: str = (
+        "ollama:llama3.1:8b"  # Local Ollama model for evaluation (note: ollama: prefix)
+    )
     JUDGE_BASE_URL: str = "http://localhost:11434"  # Ollama service URL
-    JUDGE_TEMPERATURE: float = 0.1    # Low temperature for consistent scoring
-    
+    JUDGE_TEMPERATURE: float = 0.1  # Low temperature for consistent scoring
+
     # Evaluation criteria weights
-    CRITERIA_WEIGHTS: Dict[str, float] = {
-        "detection_accuracy": 0.4,    # 40% weight on correct threat detection
-        "report_quality": 0.3,        # 30% weight on report quality
-        "response_time": 0.2,         # 20% weight on performance
-        "false_positive_rate": 0.1    # 10% weight on minimizing false positives
-    }
+    CRITERIA_WEIGHTS: Dict[str, float] = field(
+        default_factory=lambda: {
+            "detection_accuracy": 0.4,  # 40% weight on correct threat detection
+            "report_quality": 0.3,  # 30% weight on report quality
+            "response_time": 0.2,  # 20% weight on performance
+            "false_positive_rate": 0.1,  # 10% weight on minimizing false positives
+        }
+    )
 
 
 # Evaluation prompts for LLM-as-a-Judge
@@ -111,22 +115,22 @@ EVALUATION_TEST_CASES = [
         "description": "Test detection of SSH brute force attacks",
         "input_file": "data/auth.log",
         "expected_threats": ["203.0.113.55", "192.0.2.147"],
-        "difficulty": "easy"
+        "difficulty": "easy",
     },
     {
         "name": "advanced_pattern_recognition",
         "description": "Test recognition of complex attack patterns",
         "input_file": "data/auth.log",
         "expected_patterns": ["credential_stuffing", "reconnaissance"],
-        "difficulty": "medium"
+        "difficulty": "medium",
     },
     {
         "name": "report_generation_quality",
         "description": "Test quality of generated incident reports",
         "focus": "report_quality",
         "min_score": 7.0,
-        "difficulty": "medium"
-    }
+        "difficulty": "medium",
+    },
 ]
 
 
@@ -139,7 +143,7 @@ def get_judge_prompts() -> Dict[str, str]:
     """Get all LLM-as-a-judge prompts."""
     return {
         "report_quality": REPORT_QUALITY_PROMPT,
-        "threat_analysis": THREAT_ANALYSIS_PROMPT
+        "threat_analysis": THREAT_ANALYSIS_PROMPT,
     }
 
 
