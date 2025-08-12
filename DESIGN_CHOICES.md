@@ -166,70 +166,6 @@ ip_successful_logins = {}
 
 This dual approach enable detection of successful breaches even if the LLM fails.
 
-### State Management Design
-
-The **`SOCState` dataclass** serves as the single source of truth across all subgraphs:
-
-**Design Decisions:**
-- Used `@dataclass` for clean syntax and automatic `__init__`
-- Implemented `__post_init__` to handle mutable defaults safely
-- All fields are optional with sensible defaults
-- State accumulates data progressively through the pipeline
-
-**Key Fields:**
-- `parsed_logs`: List[Dict] - Structured log entries
-- `suspicious_events`: List[Dict] - Detected anomalies with severity
-- `enriched_data`: Dict[str, Any] - IP-keyed threat intelligence
-- `incident_report`: str - Final markdown report
-- `processing_errors`: List[str] - Error accumulation for debugging
-
-**Why This Design:**
-- Enables independent subgraph testing with partial state
-- Supports incremental processing and checkpointing
-- Makes data flow explicit and debuggable
-- Facilitates state persistence for long-running analyses
-
-### Tool Implementation
-
-**IP Reputation Tool Design:**
-
-The `ip_reputation_tool()` in `subgraph_enrich_indicators.py` implements a **mock API pattern**:
-
-```python
-def ip_reputation_tool(ip_address: str) -> Dict[str, Any]:
-    # Load from mock_api_responses.json
-    # Return structured threat intelligence
-    # Handle missing IPs gracefully
-```
-
-**Features:**
-- Dictionary lookup from JSON file (simulates API response)
-- Threat level classification based on abuse scores (90+ = HIGH)
-- Graceful handling of missing IPs (returns "not_found" status)
-- Rich data model: abuse scores, geo-location, ISP, hostnames
-
-**Production Migration Path:**
-```python
-# Current: Mock implementation
-threat_intel = json.load(open("mock_api_responses.json"))
-
-# Production: Real API
-threat_intel = await aiohttp.get(
-    f"https://api.abuseipdb.com/v2/check?ip={ip}",
-    headers={"Key": API_KEY},
-    timeout=5,
-    retry=3
-)
-```
-
-**Required Production Changes:**
-- Add async/await for network calls
-- Implement rate limiting (100 requests/minute)
-- Add caching layer (Redis/memcached)
-- Handle API authentication and key rotation
-- Implement circuit breaker for API failures
-- Add request queuing and batching
-
 ### Error Handling Strategy
 
 I implemented a **resilient, fail-safe approach** across all subgraphs:
@@ -260,29 +196,6 @@ I implemented a **resilient, fail-safe approach** across all subgraphs:
 - Enables post-mortem debugging
 - Could be extended to send alerts in production
 
-### Model Selection & Configuration
-
-**Llama 3.1:8b Selection Rationale:**
-
-**Pros:**
-- Runs locally - no data leaves the organization (critical for security)
-- 8B parameters sufficient for log analysis tasks
-- Fast inference (~2-3 seconds per analysis)
-- No API costs or rate limits
-- Consistent, reproducible results
-
-**Cons:**
-- Less capable than GPT-4 or Claude for complex reasoning
-- Requires local GPU resources
-- May need fine-tuning for specialized security terms
-
-**Configuration:**
-```python
-temperature=0.1  # Low temperature for consistent analysis
-```
-- Low temperature ensures deterministic, focused responses
-- Critical for security analysis where consistency matters
-- Reduces hallucination risk
 
 **Prompt Engineering Strategy:**
 
